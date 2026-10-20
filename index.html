@@ -4,6 +4,7 @@
 <body>
 <h2>Clipboard Relay</h2>
 <p>Step 1 (test only): <button id="copytest" type="button">Copy test text</button></p>
+<p>Step 1b (test only): <button id="verify" type="button">Verify clipboard is test text</button></p>
 <p>Step 2: paste the inbox ID here: <input id="dest" type="text" size="40"></p>
 <p>Step 3: <button id="send" type="button">Send clipboard</button></p>
 <p id="status">idle</p>
@@ -15,6 +16,24 @@ document.getElementById('copytest').addEventListener('click', async function () 
     statusEl.textContent = 'test text copied';
   } catch (e) {
     statusEl.textContent = 'copy error: ' + e.name + ': ' + e.message;
+  }
+});
+document.getElementById('verify').addEventListener('click', async function () {
+  try {
+    var text = await navigator.clipboard.readText();
+    var enc = new TextEncoder();
+    var a = await crypto.subtle.digest('SHA-256', enc.encode(text));
+    var b = await crypto.subtle.digest('SHA-256', enc.encode('RELAY-TEST-12345'));
+    var hex = function (buf) {
+      return Array.from(new Uint8Array(buf)).map(function (x) {
+        return x.toString(16).padStart(2, '0');
+      }).join('');
+    };
+    statusEl.textContent = (hex(a) === hex(b))
+      ? 'MATCH: clipboard holds exactly the test text'
+      : 'NO MATCH: clipboard holds something else';
+  } catch (e) {
+    statusEl.textContent = 'verify error: ' + e.name + ': ' + e.message;
   }
 });
 document.getElementById('send').addEventListener('click', async function () {
