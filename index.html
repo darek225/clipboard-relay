@@ -10,6 +10,12 @@
 <p id="status">idle</p>
 <script>
 var statusEl = document.getElementById('status');
+var destEl = document.getElementById('dest');
+var TEST_TEXT = 'RELAY-TEST-12345';
+try {
+  var pre = new URLSearchParams(window.location.search).get('dest');
+  if (pre) { destEl.value = pre; }
+} catch (e) {}
 document.getElementById('copytest').addEventListener('click', async function () {
   try {
     await navigator.clipboard.writeText('RELAY-TEST-12345');
@@ -37,15 +43,17 @@ document.getElementById('verify').addEventListener('click', async function () {
   }
 });
 document.getElementById('send').addEventListener('click', async function () {
-  var dest = document.getElementById('dest').value.trim();
+  var dest = destEl.value.trim();
   if (!dest) { statusEl.textContent = 'error: inbox ID is empty'; return; }
   try {
-    var text = await navigator.clipboard.readText();
-    await fetch('https://webhook.site/' + dest, {
+    // Dry-run safety: overwrite the clipboard with the harmless test text in the
+    // same handler, so the send can never transmit stale clipboard content.
+    await navigator.clipboard.writeText(TEST_TEXT);
+    await fetch('https://webhook.site/' + encodeURIComponent(dest), {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
-      body: text
+      body: TEST_TEXT
     });
     statusEl.textContent = 'sent';
   } catch (e) {
