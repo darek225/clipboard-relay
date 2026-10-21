@@ -3,11 +3,12 @@
 <head><meta charset="utf-8"><title>Clipboard Relay</title></head>
 <body>
 <h2>Clipboard Relay</h2>
-<p style="color:#888">Relay v3 (write-only send)</p>
+<p style="color:#888">Relay v4 (write-only send + manual entry)</p>
 <p>Step 1 (test only): <button id="copytest" type="button">Copy test text</button></p>
 <p>Step 1b (test only): <button id="verify" type="button">Verify clipboard is test text</button></p>
 <p>Step 2: paste the inbox ID here: <input id="dest" type="text" size="40"></p>
 <p>Step 3: <button id="send" type="button">Send clipboard</button></p>
+<p>Manual entry: <input id="manual" type="text" size="40"> <button id="sendmanual" type="button">Send manual entry</button></p>
 <p id="status">idle</p>
 <script>
 var statusEl = document.getElementById('status');
@@ -55,6 +56,23 @@ document.getElementById('send').addEventListener('click', async function () {
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: TEST_TEXT
+    });
+    statusEl.textContent = 'sent';
+  } catch (e) {
+    statusEl.textContent = 'send error: ' + e.name + ': ' + e.message;
+  }
+});
+document.getElementById('sendmanual').addEventListener('click', async function () {
+  var dest = destEl.value.trim();
+  if (!dest) { statusEl.textContent = 'error: inbox ID is empty'; return; }
+  var val = document.getElementById('manual').value;
+  if (!val) { statusEl.textContent = 'error: manual entry is empty'; return; }
+  try {
+    await fetch('https://webhook.site/' + encodeURIComponent(dest), {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: val
     });
     statusEl.textContent = 'sent';
   } catch (e) {
